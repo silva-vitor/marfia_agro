@@ -30,7 +30,7 @@ export default function Pagina(props) {
         </Container>
       </Navbar>
 
-      jh
+  
 
       <div style={backgroundStyle}>
         <div className="bg-secondary text-white text-center p-3">
