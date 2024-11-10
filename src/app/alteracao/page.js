@@ -26,9 +26,9 @@ export default function Page() {
     }
 
     return (
-        <Pagina titulo="Produtos">
+        <Pagina titulo="ALteração de produtos">
 
-            <Link href="/produtos/form" className="btn btn-primary mb-3">
+            <Link href="/alteracao" className="btn btn-primary mb-3">
                 <FaPlusCircle /> Novo
             </Link>
 
