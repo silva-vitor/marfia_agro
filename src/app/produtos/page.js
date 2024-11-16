@@ -1,75 +1,69 @@
 'use client'
 
 import Pagina from "@/components/Pagina";
-import Link from "next/link"
+import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Card, Col, Row, Table } from "react-bootstrap"
-import { FaPlusCircle } from "react-icons/fa";
-import { FaRegEdit } from "react-icons/fa";
-import { MdDelete } from "react-icons/md";
-
+import { Card, Col, Row } from "react-bootstrap";
+import { FaShoppingCart } from "react-icons/fa";
 
 export default function Page() {
+    // Estado para armazenar produtos
+    const [produtos, setProdutos] = useState([]);
+    // Estado para armazenar o carrinho
+    const [carrinho, setCarrinho] = useState([]);
 
-    const [produtos, setProdutos] = useState([])
-
+    // Carregar produtos do localStorage ao carregar a página
     useEffect(() => {
-        setProdutos(JSON.parse(localStorage.getItem('produtos')) || [])
-    }, [])
+        setProdutos(JSON.parse(localStorage.getItem('produtos')) || []);
+        // Carregar carrinho do localStorage
+        setCarrinho(JSON.parse(localStorage.getItem('carrinho')) || []);
+    }, []);
 
-    function excluir(id) {
-        if (confirm('Deseja realmente excluir o registro?')) {
-            const dados = produtos.filter(item => item.id != id)
-            localStorage.setItem('produtos', JSON.stringify(dados))
-            setProdutos(dados)
-        }
-    }
+    // Função para adicionar um produto ao carrinho
+    const adicionarAoCarrinho = (produto) => {
+        const novoCarrinho = [...carrinho, produto];
+        setCarrinho(novoCarrinho);
+        // Armazenar o carrinho atualizado no localStorage
+        localStorage.setItem('carrinho', JSON.stringify(novoCarrinho));
+        alert(`${produto.nome} foi adicionado ao carrinho!`);
+    };
 
     return (
-        <Pagina titulo="Produtos">
-
-            <Link href="/produtos/form" className="btn btn-primary mb-3">
-                <FaPlusCircle /> Novo
-            </Link>
-
+        <Pagina>
             <Row className="mt-4">
-                {produtos.map(item => (
-                    <Col key={item.id} xs={12} sm={6} md={4} lg={3} className="mb-4">
-                        <Card style={{ width: '100%' }}>
+                {/* Mapeia os produtos e renderiza um card para cada item */}
+                {produtos.map((item) => (
+                    <Col
+                        key={item.id}
+                        xs={12} sm={6} md={4} lg={3}
+                        className="mb-4"
+                    >
+                        <Card className="h-100 d-flex flex-column">
                             <Card.Img
                                 src={item.imagem}
                                 alt={item.nome}
-                                width={100}
+                                style={{ height: '250px' }}
                             />
-                            <Card.Body>
-                                <Card.Title>{item.nome || 'Card Title'}</Card.Title>
-
-                                <Card.Text>
-                                    <b>Validade:</b> {item.validade}
-                                </Card.Text>
-                                <Card.Text>
-                                    <b>Descrição:</b> {item.descrição}
-                                </Card.Text>
-                                <Card.Text>
-                                    <b>Lote:</b> {item.lote}
-                                </Card.Text>
-                                <Card.Text>
-                                    <b>Valor:</b> {item.valor}
-                                </Card.Text>
-                                <Link href={`/produtos/form/${item.id}`} className="me-2">
-
-                                    <FaRegEdit title="Editar" className="text-primary" />
-                                </Link>
-                                <MdDelete
-                                    title="Excluir"
-                                    className="text-danger"
-                                    onClick={() => excluir(item.id)}
-                                />
+                            <Card.Body className="d-flex flex-column">
+                                <Card.Title>{item.nome || 'Produto'}</Card.Title>
+                                <Card.Text><b>Validade:</b> {item.validade}</Card.Text>
+                                <Card.Text><b>Descrição:</b> {item.descrição}</Card.Text>
+                                <Card.Text><b>Lote:</b> {item.lote}</Card.Text>
+                                <Card.Text><b>Valor:</b> R$ {item.valor}</Card.Text>
+                                {/* Botão para adicionar ao carrinho */}
+                                <div className="mt-auto">
+                                    <button
+                                        className="btn btn-success w-100 d-flex align-items-center justify-content-center"
+                                        onClick={() => adicionarAoCarrinho(item)}
+                                    >
+                                        <FaShoppingCart className="me-2" /> 
+                                    </button>
+                                </div>
                             </Card.Body>
                         </Card>
                     </Col>
                 ))}
             </Row>
         </Pagina>
-    )
+    );
 }

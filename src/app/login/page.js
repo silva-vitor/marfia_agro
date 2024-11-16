@@ -1,61 +1,71 @@
+// 'use client' indica que este componente é renderizado no lado do cliente
 'use client';
 
-// Importações necessárias do Formik, Next.js, React e Bootstrap
-import { Formik } from "formik";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Button, Form, Container } from "react-bootstrap";
-import { FaTractor } from "react-icons/fa6";
-import { TiArrowBack } from "react-icons/ti"; // Ícone de seta para voltar
-import { v4 as uuidv4 } from "uuid"; // Gerador de IDs únicos
-import Pagina from "@/components/Pagina";
-import { useEffect, useState } from "react";
+import { Formik } from "formik"; // Formik é utilizado para manipulação de formulários
+import Link from "next/link"; // Link para navegação entre páginas em Next.js
+import { useRouter } from "next/navigation"; // useRouter para redirecionamento de páginas
+import { Button, Form, Container } from "react-bootstrap"; // Componentes do Bootstrap para estilização
+import { FaTractor } from "react-icons/fa6"; // Ícone do trator para botão
+import { TiArrowBack } from "react-icons/ti"; // Ícone de seta para o botão de voltar
+import { useEffect, useState } from "react"; // useEffect e useState para manipulação de estado e efeitos colaterais
 
-export default function Page({ params }) {
-    const route = useRouter();
-    const searchParams = useSearchParams();
-    const funcionarioId = params.id || searchParams.get('id');
+export default function Page() {
+    const route = useRouter(); // Hook para navegação/roteamento
+    const [funcionarios, setFuncionarios] = useState([]); // Estado para armazenar a lista de funcionários
 
-    const [funcionarios, setFuncionarios] = useState([]);
-    const [funcionario, setFuncionario] = useState({
-        id: '',
-        nome: '',
-        documento: '',
-        email: '',
-        telefone: '',
-        senha: ''
-    });
+    // Função para adicionar o usuário administrador padrão ao localStorage
+    function adicionarAdmin() {
+        const admin = {
+            id: "1",
+            nome: "vitor",
+            email: "vp986788@gmail.com",
+            senha: "270420",
+            telefone: "123456789",
+        };
 
-    useEffect(() => {
+        // Busca os funcionários já armazenados no localStorage ou inicializa como um array vazio
         const storedFuncionarios = JSON.parse(localStorage.getItem('funcionarios')) || [];
-        setFuncionarios(storedFuncionarios);
+        
+        // Verifica se o administrador já existe
+        const adminExiste = storedFuncionarios.some(func => func.email === admin.email);
 
-        if (funcionarioId) {
-            const dados = storedFuncionarios.find(item => item.id === funcionarioId);
-            if (dados) setFuncionario(dados);
+        // Se o administrador não existir, ele é adicionado
+        if (!adminExiste) {
+            storedFuncionarios.push(admin);
+            localStorage.setItem('funcionarios', JSON.stringify(storedFuncionarios)); // Salva no localStorage
+            console.log("Administrador adicionado com sucesso!");
         }
-    }, [funcionarioId]);
+    }
 
-    function salvar(dados) {
-        let novosFuncionarios;
+    // useEffect é usado para adicionar o admin e carregar a lista de funcionários quando o componente é montado
+    useEffect(() => {
+        adicionarAdmin(); // Adiciona o administrador padrão, se necessário
 
-        if (dados.id) {
-            novosFuncionarios = funcionarios.map(item =>
-                item.id === dados.id ? { ...item, ...dados } : item
-            );
+        // Carrega os funcionários salvos no localStorage
+        const storedFuncionarios = JSON.parse(localStorage.getItem('funcionarios')) || [];
+        setFuncionarios(storedFuncionarios); // Atualiza o estado com a lista de funcionários
+    }, []);
+
+    // Função para autenticar o usuário
+    function autenticar(dados) {
+        // Verifica se existe um funcionário com o email e senha fornecidos
+        const funcionarioEncontrado = funcionarios.find(
+            (func) => func.email === dados.email && func.senha === dados.senha
+        );
+
+        // Se as credenciais estiverem corretas
+        if (funcionarioEncontrado) {
+            localStorage.setItem("isAuthenticated", "true"); // Salva estado de autenticação no localStorage
+            alert("Login bem-sucedido!"); // Mostra uma mensagem de sucesso
+            route.push("/produtos"); // Redireciona para a página de produtos
         } else {
-            dados.id = uuidv4();
-            novosFuncionarios = [...funcionarios, dados];
+            alert("Credenciais inválidas. Tente novamente."); // Mensagem de erro para credenciais inválidas
         }
-
-        localStorage.setItem('funcionarios', JSON.stringify(novosFuncionarios));
-        setFuncionarios(novosFuncionarios);
-        route.push('/funcionarios/alteracao');
     }
 
     return (
         <>
-            {/* Container para centralizar o formulário com imagem de fundo */}
+            {/* Container para centralizar o formulário de login com uma imagem de fundo */}
             <Container
                 fluid
                 className="d-flex justify-content-center align-items-center vh-100"
@@ -66,8 +76,10 @@ export default function Page({ params }) {
                     backgroundRepeat: 'no-repeat',
                 }}
             >
+                {/* Caixa contendo o formulário de login */}
                 <div className="border p-4 rounded shadow bg-light" style={{ maxWidth: '400px', width: '100%' }}>
-                    {/* Logo */}
+                    
+                    {/* Logo centralizada */}
                     <div className="text-center mb-4">
                         <img
                             src="https://yt3.googleusercontent.com/6c_rKkbSUGia02avdrtRArFxfaiJq8Uu1-3oyzR3KUGWBKD8g5NHDXB60pNRcJoSxSrS4qvUfQ=s900-c-k-c0x00ffffff-no-rj"
@@ -76,14 +88,14 @@ export default function Page({ params }) {
                         />
                     </div>
 
-                    {/* Formulário de Login utilizando Formik */}
+                    {/* Formulário de Login utilizando Formik para manipulação de formulários */}
                     <Formik
-                        initialValues={funcionario}
-                        enableReinitialize
-                        onSubmit={salvar}
+                        initialValues={{ email: '', senha: '' }} // Valores iniciais do formulário
+                        onSubmit={autenticar} // Função chamada ao enviar o formulário
                     >
                         {({ values, handleChange, handleSubmit }) => (
                             <Form onSubmit={handleSubmit}>
+                                {/* Campo de Email */}
                                 <Form.Group className="mb-3" controlId="email">
                                     <Form.Label>Email</Form.Label>
                                     <Form.Control
@@ -93,11 +105,9 @@ export default function Page({ params }) {
                                         onChange={handleChange}
                                         placeholder="Enter email"
                                     />
-                                    <Form.Text className="text-muted">
-                                        Nunca compartilharemos seu e-mail com mais ninguém.
-                                    </Form.Text>
                                 </Form.Group>
 
+                                {/* Campo de Senha */}
                                 <Form.Group className="mb-3" controlId="senha">
                                     <Form.Label>Senha</Form.Label>
                                     <Form.Control
@@ -109,15 +119,13 @@ export default function Page({ params }) {
                                     />
                                 </Form.Group>
 
-                                <Form.Group className="mb-3" controlId="lembrar">
-                                    <Form.Check type="checkbox" label="Lembrar-me" />
-                                </Form.Group>
-
-                                <Button type="submit" variant="success" className="w-100">
+                                {/* Botão de Login */}
+                                <Button type="submit" variant="success" className="w-100 mb-3">
                                     <FaTractor /> Logar
                                 </Button>
 
-                                <Link href="/" className="btn btn-danger mt-2 w-100">
+                                {/* Link para retornar à página inicial */}
+                                <Link href="/" className="btn btn-danger w-100">
                                     <TiArrowBack /> Voltar
                                 </Link>
                             </Form>

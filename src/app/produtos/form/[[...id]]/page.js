@@ -4,7 +4,7 @@ import { Formik } from "formik";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button, Form } from "react-bootstrap";
-import { IoMdAirplane } from "react-icons/io";
+import { GiPlantWatering } from "react-icons/gi";
 import { TiArrowBack } from "react-icons/ti";
 import { v4 as uuidv4 } from "uuid";
 import Pagina from "@/components/Pagina";
@@ -131,7 +131,7 @@ export default function Page({ params }) {
 
                         <div className="text-center">
                             <Button type="submit" variant="success">
-                                <IoMdAirplane /> Salvar
+                                <GiPlantWatering /> Salvar
                             </Button>
                             <Link href="/produtos" className="btn btn-danger ms-2">
                                 <TiArrowBack /> Voltar
