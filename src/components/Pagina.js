@@ -58,24 +58,27 @@ export default function Pagina(props) {
                 <Nav.Link href="/produtos" style={navLinkStyle}>
                   Produtos
                 </Nav.Link>
-                <Nav.Link href="/pedido" style={navLinkStyle}>
-                  Pedido
-                </Nav.Link>
-
+                 
                 {/* Renderiza condicionalmente os links "funcionarios" e "cliente" */}
                 {isAuthenticated && (
                   <>
                     <Nav.Link href="/funcionarios" style={navLinkStyle}>
                       Funcionários
                     </Nav.Link>
-                    <Nav.Link href="/cliente" style={navLinkStyle}>
+                    <Nav.Link href="/clientes" style={navLinkStyle}>
                       Cliente
                     </Nav.Link>
+                  
                     <Nav.Link href="/login/produtos" style={navLinkStyle}>
                       Produtos ad
                     </Nav.Link>
                   </>
                 )}
+                
+                <Nav.Link href="/pedido" style={navLinkStyle}>
+                  Pedido
+                </Nav.Link>
+
 
                 {/* Ícone de carrinho de compras */}
                 <Nav.Link href="/carinho" style={navLinkStyle}>

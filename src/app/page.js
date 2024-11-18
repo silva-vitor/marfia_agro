@@ -38,7 +38,7 @@ export default function Page() {
                 <Card.Img
                   src={item.imagem} // Fonte da imagem do produto
                   alt={item.nome || 'Imagem do produto'} // Texto alternativo para acessibilidade
-                  style={{ height: '250px', objectFit: 'cover' }} // Define altura fixa e recorte da imagem
+                  style={{ height: '300px' }} // Define altura fixa e recorte da imagem
                 />
 
                 {/* Corpo do card com título e descrição */}

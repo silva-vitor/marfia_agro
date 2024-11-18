@@ -1,143 +1,73 @@
-'use client';
+'use client'; // Indica que este código é executado no lado do cliente em um ambiente Next.js.
 
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Button, Form } from "react-bootstrap";
-import { IoMdAirplane } from "react-icons/io";
-import { TiArrowBack } from "react-icons/ti";
-import { v4 as uuidv4 } from "uuid";
-import Pagina from "@/components/Pagina";
-import { Formik } from 'formik';
+import React, { useState } from 'react'; // Importa o React e o hook useState para gerenciar o estado local
+import { useRouter } from 'next/navigation'; // Importa o hook useRouter do Next.js para navegação entre páginas
+import { Form, Button } from 'react-bootstrap'; // Importa componentes do React-Bootstrap para a interface de formulário
 
-export default function Page({ params }) {
-  const router = useRouter();
-  const [produtos, setProdutos] = useState([]);
-  const [produto, setProduto] = useState({ imagem: '', nome: '', validade: '', descrição: '', lote: '', valor: '' });
+export default function Login() {
+  // Estado para armazenar as credenciais de login (login e senha)
+  const [credenciais, setCredenciais] = useState({ login: '', senha: '' });
+  const router = useRouter(); // Inicializa o hook de navegação
 
-  useEffect(() => {
-    const storedProdutos = JSON.parse(localStorage.getItem('produtos')) || [];
-    const produtoAtual = storedProdutos.find(item => item.id === params.id);
+  // Função para atualizar o estado das credenciais quando o usuário digitar no formulário
+  const handleChange = (e) => {
+    const { name, value } = e.target; // Desestrutura os valores 'name' e 'value' do input
+    // Atualiza o estado, mantendo o valor atual e modificando a chave correspondente ao 'name'
+    setCredenciais({ ...credenciais, [name]: value });
+  };
 
-    if (produtoAtual) {
-      setProduto(produtoAtual);
+  // Função que é chamada quando o formulário é enviado
+  const handleSubmit = (e) => {
+    e.preventDefault(); // Impede que o formulário recarregue a página
+
+    // Recupera os clientes do localStorage (ou um array vazio, caso não existam dados)
+    const clientes = JSON.parse(localStorage.getItem('clientes')) || [];
+    // Verifica se há um cliente com as credenciais fornecidas (login e senha)
+    const usuario = clientes.find(
+      u => u.login === credenciais.login && u.senha === credenciais.senha
+    );
+
+    // Se o usuário for encontrado, realiza o login
+    if (usuario) {
+      localStorage.setItem('usuarioLogado', JSON.stringify(usuario)); // Armazena o usuário logado no localStorage
+      // Se o tipo de usuário for 'admin', redireciona para a área administrativa
+      if (usuario.tipo === 'admin') {
+        router.push('/login/produtos'); // Redireciona para página de administração de produtos
+      } else {
+        router.push('/login/cliente'); // Redireciona para página do cliente
+      }
     } else {
-      // Caso o produto não exista, redireciona para a lista de produtos
-      router.push('/login/produtos');
+      alert('Credenciais inválidas'); // Exibe um alerta se as credenciais forem inválidas
     }
-    setProdutos(storedProdutos);
-  }, [params.id, router]);
-
-  const salvar = (dados) => {
-    let updatedProdutos = [...produtos];
-    if (produto.id) {
-      const index = updatedProdutos.findIndex(item => item.id === produto.id);
-      updatedProdutos[index] = { ...produto, ...dados };
-    } else {
-      dados.id = uuidv4();
-      updatedProdutos.push(dados);
-    }
-    localStorage.setItem('produtos', JSON.stringify(updatedProdutos));
-    router.push('/login/produtos'); // Redireciona para a lista de produtos após salvar
   };
 
   return (
-    <Pagina titulo="Produto">
-      <Formik
-        enableReinitialize={true}
-        initialValues={produto}
-        onSubmit={values => salvar(values)}
-      >
-        {({ values, handleChange, handleSubmit, setFieldValue }) => (
-          <Form onSubmit={handleSubmit}>
-            {/* Campos do formulário */}
-            <Form.Group className="mb-3" controlId="imagem">
-              <Form.Label>Imagem</Form.Label>
-              <Form.Control
-                type="file"
-                name="imagem"
-                accept=".jpg, .jpeg, .png, .gif, .bmp"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file && file.size > 2 * 1024 * 1024) {
-                    alert("A imagem deve ter no máximo 2 MB");
-                    return;
-                  }
-                  const reader = new FileReader();
-                  reader.onloadend = () => setFieldValue("imagem", reader.result);
-                  file && reader.readAsDataURL(file);
-                }}
-              />
-              {values.imagem && (
-                <img
-                  src={values.imagem}
-                  alt="Pré-visualização"
-                  style={{ width: '200px', height: '200px', objectFit: 'cover', marginTop: '10px' }}
-                />
-              )}
-            </Form.Group>
+    <Form onSubmit={handleSubmit}>
+      {/* Formulário de login */}
+      <Form.Group className="mb-3">
+        <Form.Label>Email</Form.Label> {/* Rótulo do campo de e-mail */}
+        <Form.Control
+          type="email"
+          name="login" // O nome é 'login', que será usado para armazenar no estado
+          value={credenciais.login} // O valor é o estado 'login'
+          onChange={handleChange} // Chama handleChange quando o usuário digitar algo
+          required // Campo obrigatório
+        />
+      </Form.Group>
 
-            <Form.Group className="mb-3" controlId="nome">
-              <Form.Label>Nome</Form.Label>
-              <Form.Control
-                type="text"
-                name="nome"
-                value={values.nome}
-                onChange={handleChange}
-              />
-            </Form.Group>
+      <Form.Group className="mb-3">
+        <Form.Label>Senha</Form.Label> {/* Rótulo do campo de senha */}
+        <Form.Control
+          type="password"
+          name="senha" // O nome é 'senha', que será usado para armazenar no estado
+          value={credenciais.senha} // O valor é o estado 'senha'
+          onChange={handleChange} // Chama handleChange quando o usuário digitar algo
+          required // Campo obrigatório
+        />
+      </Form.Group>
 
-            <Form.Group className="mb-3" controlId="validade">
-              <Form.Label>Validade</Form.Label>
-              <Form.Control
-                type="text"
-                name="validade"
-                value={values.validade}
-                onChange={handleChange}
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3" controlId="descricao">
-              <Form.Label>Descrição</Form.Label>
-              <Form.Control
-                type="text"
-                name="descrição"
-                value={values.descrição}
-                onChange={handleChange}
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3" controlId="lote">
-              <Form.Label>Lote</Form.Label>
-              <Form.Control
-                type="text"
-                name="lote"
-                value={values.lote}
-                onChange={handleChange}
-              />
-            </Form.Group>
-
-            <Form.Group className="mb-3" controlId="valor">
-              <Form.Label>Valor</Form.Label>
-              <Form.Control
-                type="number"
-                name="valor"
-                value={values.valor}
-                onChange={handleChange}
-              />
-            </Form.Group>
-
-            <div className="text-center">
-              <Button type="submit" variant="success">
-                <IoMdAirplane /> Salvar
-              </Button>
-              <Link href="/login/produtos" className="btn btn-danger ms-2">
-                <TiArrowBack /> Voltar
-              </Link>
-            </div>
-          </Form>
-        )}
-      </Formik>
-    </Pagina>
+      {/* Botão de envio do formulário */}
+      <Button type="submit">Entrar</Button>
+    </Form>
   );
 }

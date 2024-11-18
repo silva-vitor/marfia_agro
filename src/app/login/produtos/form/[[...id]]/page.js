@@ -8,14 +8,18 @@ import { GiPlantWatering } from "react-icons/gi";
 import { TiArrowBack } from "react-icons/ti";
 import { v4 as uuidv4 } from "uuid";
 import Pagina from "@/components/Pagina";
+import ProdutoValidador from "@/validadores/produtoValidador";
+
 
 export default function Page({ params }) {
     const route = useRouter();
 
+    // Carrega os produtos do localStorage e encontra o produto pelo ID
     const produtos = JSON.parse(localStorage.getItem('produtos')) || [];
     const dados = produtos.find(item => item.id == params.id);
     const produto = dados || { imagem: '', nome: '', validade: '', descrição: '', lote: '', valor: '' };
 
+    // Função para salvar ou atualizar o produto no localStorage
     function salvar(dados) {
         if (produto.id) {
             Object.assign(produto, dados);
@@ -31,15 +35,19 @@ export default function Page({ params }) {
         <Pagina titulo="Produto">
             <Formik
                 initialValues={produto}
+                validationSchema={ProdutoValidador} // Validação usando o Yup
                 onSubmit={values => salvar(values)}
             >
                 {({
                     values,
                     handleChange,
                     handleSubmit,
-                    setFieldValue
+                    setFieldValue,
+                    errors,
+                    touched
                 }) => (
                     <Form onSubmit={handleSubmit}>
+                        {/* Campo para a imagem do produto */}
                         <Form.Group className="mb-3" controlId="imagem">
                             <Form.Label>Imagem</Form.Label>
                             <Form.Control
@@ -48,36 +56,32 @@ export default function Page({ params }) {
                                 accept=".jpg, .jpeg, .png, .gif, .bmp"
                                 onChange={(e) => {
                                     const file = e.target.files[0];
-
-                                    // Verificação opcional do tamanho da imagem
-                                    if (file && file.size > 2 * 1024 * 1024) { // Limite de 2 MB
+                                    if (file && file.size > 2 * 1024 * 1024) {
                                         alert("A imagem deve ter no máximo 2 MB");
                                         return;
                                     }
-
                                     const reader = new FileReader();
                                     reader.onloadend = () => {
-                                        setFieldValue("imagem", reader.result); // Define a URL da imagem
+                                        setFieldValue("imagem", reader.result);
                                     };
                                     if (file) {
-                                        reader.readAsDataURL(file); // Lê o arquivo como uma URL de dados
+                                        reader.readAsDataURL(file);
                                     }
                                 }}
                             />
-                            {/* Pré-visualização da imagem com tamanho definido */}
+                            {errors.imagem && touched.imagem && (
+                                <div className="text-danger">{errors.imagem}</div>
+                            )}
                             {values.imagem && (
                                 <img
                                     src={values.imagem}
                                     alt="Pré-visualização"
-                                    style={{
-                                        width: '200px',  // Largura da imagem
-                                        height: '200px', // Altura da imagem
-                                        objectFit: 'cover', // Ajusta a imagem para cobrir o espaço sem distorção
-                                        marginTop: '10px'
-                                    }}
+                                    style={{ width: '200px', height: '200px', objectFit: 'cover', marginTop: '10px' }}
                                 />
                             )}
                         </Form.Group>
+
+                        {/* Campo para o nome */}
                         <Form.Group className="mb-3" controlId="nome">
                             <Form.Label>Nome</Form.Label>
                             <Form.Control
@@ -85,9 +89,12 @@ export default function Page({ params }) {
                                 name="nome"
                                 value={values.nome}
                                 onChange={handleChange}
+                                isInvalid={touched.nome && !!errors.nome}
                             />
+                            <Form.Control.Feedback type="invalid">{errors.nome}</Form.Control.Feedback>
                         </Form.Group>
 
+                        {/* Campo para validade */}
                         <Form.Group className="mb-3" controlId="validade">
                             <Form.Label>Validade</Form.Label>
                             <Form.Control
@@ -95,9 +102,12 @@ export default function Page({ params }) {
                                 name="validade"
                                 value={values.validade}
                                 onChange={handleChange}
+                                isInvalid={touched.validade && !!errors.validade}
                             />
+                            <Form.Control.Feedback type="invalid">{errors.validade}</Form.Control.Feedback>
                         </Form.Group>
 
+                        {/* Campo para descrição */}
                         <Form.Group className="mb-3" controlId="descrição">
                             <Form.Label>Descrição</Form.Label>
                             <Form.Control
@@ -106,9 +116,12 @@ export default function Page({ params }) {
                                 name="descrição"
                                 value={values.descrição}
                                 onChange={handleChange}
+                                isInvalid={touched.descrição && !!errors.descrição}
                             />
+                            <Form.Control.Feedback type="invalid">{errors.descrição}</Form.Control.Feedback>
                         </Form.Group>
 
+                        {/* Campo para lote */}
                         <Form.Group className="mb-3" controlId="lote">
                             <Form.Label>Lote</Form.Label>
                             <Form.Control
@@ -116,9 +129,12 @@ export default function Page({ params }) {
                                 name="lote"
                                 value={values.lote}
                                 onChange={handleChange}
+                                isInvalid={touched.lote && !!errors.lote}
                             />
+                            <Form.Control.Feedback type="invalid">{errors.lote}</Form.Control.Feedback>
                         </Form.Group>
 
+                        {/* Campo para valor */}
                         <Form.Group className="mb-3" controlId="valor">
                             <Form.Label>Valor</Form.Label>
                             <Form.Control
@@ -126,7 +142,9 @@ export default function Page({ params }) {
                                 name="valor"
                                 value={values.valor}
                                 onChange={handleChange}
+                                isInvalid={touched.valor && !!errors.valor}
                             />
+                            <Form.Control.Feedback type="invalid">{errors.valor}</Form.Control.Feedback>
                         </Form.Group>
 
                         <div className="text-center">

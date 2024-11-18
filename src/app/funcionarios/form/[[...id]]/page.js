@@ -1,139 +1,181 @@
-'use client';
+'use client'
 
+import Pagina from "@/components/Pagina";
 import { Formik } from "formik";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { Button, Form } from "react-bootstrap";
-import { FaTractor } from "react-icons/fa6";
-import { TiArrowBack } from "react-icons/ti";
-import { v4 as uuidv4 } from "uuid";
-import Pagina from "@/components/Pagina";
-import { useEffect, useState } from "react";
+import { FaCheck } from "react-icons/fa";
+import { MdOutlineArrowBack } from "react-icons/md";
+import { mask } from "remask";
+import { v4 } from "uuid";
+
 
 export default function Page({ params }) {
-  const route = useRouter();
-  const searchParams = useSearchParams();
-  const funcionarioId = params.id || searchParams.get('id');
 
-  const [funcionarios, setFuncionarios] = useState([]);
-  const [funcionario, setFuncionario] = useState({
-    id: '',
-    nome: '',
-    documento: '',
-    email: '',
-    telefone: ''
-  });
+    const route = useRouter();
 
-  // Carregar os funcionários do localStorage ao montar o componente
-  useEffect(() => {
-    const storedFuncionarios = JSON.parse(localStorage.getItem('funcionarios')) || [];
-    setFuncionarios(storedFuncionarios);
+    const funcionarios = JSON.parse(localStorage.getItem('funcionarios')) || [];
+    const dados = funcionarios.find(item => item.id == params.id);
+    const funcionario = dados || { nome: '', email: '', telefone: '', data_nascimento: '', tipo_documento: '', documento: '' };
 
-    // Se existir um id nos params, carregar os dados do funcionário
-    if (funcionarioId) {
-      const dados = storedFuncionarios.find(item => item.id === funcionarioId);
-      if (dados) setFuncionario(dados);
+    function salvar(dados) {
+        if (funcionario.id) {
+            Object.assign(funcionario, dados);
+        } else {
+            dados.id = v4();
+            funcionarios.push(dados);
+        }
+
+        localStorage.setItem('funcionarios', JSON.stringify(funcionarios));
+        return route.push('/funcionarios');
     }
-  }, [funcionarioId]);
 
-  // Função para salvar ou atualizar o funcionário
-  function salvar(dados) {
-    if (funcionario.id) {
-      // Atualizar funcionário
-      const updatedFuncionarios = funcionarios.map(item =>
-        item.id === funcionario.id ? { ...item, ...dados } : item
-      );
-      localStorage.setItem('funcionarios', JSON.stringify(updatedFuncionarios));
-      setFuncionarios(updatedFuncionarios);
-    } else {
-      // Adicionar novo funcionário
-      dados.id = uuidv4();
-      const novosFuncionarios = [...funcionarios, dados];
-      localStorage.setItem('funcionarios', JSON.stringify(novosFuncionarios));
-      setFuncionarios(novosFuncionarios);
-    }
-    route.push('/funcionarios');
-  }
+    return (
+        <Pagina titulo="Funcionário">
+            <Formik
+                initialValues={funcionario}
+                validationSchema={FuncionarioValidador} // Aplica a validação
+                onSubmit={values => salvar(values)}
+            >
+                {({
+                    values,
+                    handleChange,
+                    handleSubmit,
+                    setFieldValue,
+                    errors,
+                    touched
+                }) => {
+                    useEffect(() => {
+                        switch (values.tipo_documento) {
+                            case 'CPF':
+                                values.documento = mask(values.documento, '999.999.999-99');
+                                break;
+                            case 'CNPJ':
+                                values.documento = mask(values.documento, '99.999.999/9999-99');
+                                break;
+                            case 'RG':
+                                values.documento = mask(values.documento, '9.999.999');
+                                break;
+                            case 'Passaporte':
+                                values.documento = mask(values.documento, 'AAA9999');
+                                break;
+                        }
+                    }, [values.documento]);
 
-  return (
-    <Pagina titulo="Funcionário">
-      <Formik
-        initialValues={funcionario}
-        enableReinitialize
-        onSubmit={values => salvar(values)}
-      >
-        {({
-           values, 
-        handleChange,
-         handleSubmit
-         }) => (
-          <Form onSubmit={handleSubmit}>
-            <Form.Group className="mb-3" controlId="id">
-              <Form.Label>ID</Form.Label>
-              <Form.Control
-                type="text"
-                name="id"
-                value={values.id}
-                onChange={handleChange}
-                disabled
-              />
-            </Form.Group>
+                    useEffect(() => {
+                        values.documento = '';
+                    }, [values.tipo_documento]);
 
-            <Form.Group className="mb-3" controlId="nome">
-              <Form.Label>Nome</Form.Label>
-              <Form.Control
-                type="text"
-                name="nome"
-                value={values.nome}
-                onChange={handleChange}
-              />
-            </Form.Group>
+                    return (
+                        <Form>
+                            <Form.Group className="mb-3" controlId="nome">
+                                <Form.Label>Nome</Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    name="nome"
+                                    value={values.nome}
+                                    onChange={handleChange}
+                                    isInvalid={touched.nome && errors.nome}
+                                />
+                                <Form.Control.Feedback type="invalid">
+                                    {errors.nome}
+                                </Form.Control.Feedback>
+                            </Form.Group>
 
-            <Form.Group className="mb-3" controlId="documento">
-              <Form.Label>Documento</Form.Label>
-              <Form.Control
-                type="text"
-                name="documento"
-                value={values.documento}
-                onChange={handleChange}
-              />
-            </Form.Group>
+                            <Form.Group className="mb-3" controlId="tipo_documento">
+                                <Form.Label>Tipo de Documento</Form.Label>
+                                <Form.Select
+                                    name="tipo_documento"
+                                    value={values.tipo_documento}
+                                    onChange={handleChange}
+                                    isInvalid={touched.tipo_documento && errors.tipo_documento}
+                                >
+                                    <option value=''>Selecione</option>
+                                    <option value='CPF'>CPF</option>
+                                    <option value='CNPJ'>CNPJ</option>
+                                    <option value='RG'>RG</option>
+                                    <option value='Passaporte'>Passaporte</option>
+                                    <option value='Outro'>Outro</option>
+                                </Form.Select>
+                                <Form.Control.Feedback type="invalid">
+                                    {errors.tipo_documento}
+                                </Form.Control.Feedback>
+                            </Form.Group>
 
-            <Form.Group className="mb-3" controlId="email">
-              <Form.Label>Email</Form.Label>
-              <Form.Control
-                type="email"
-                name="email"
-                value={values.email}
-                onChange={handleChange}
-                placeholder="Enter email"
-              />
-              <Form.Text className="text-muted">
-                Nunca compartilharemos seu e-mail com mais ninguém.
-              </Form.Text>
-            </Form.Group>
+                            <Form.Group className="mb-3" controlId="documento">
+                                <Form.Label>Documento</Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    name="documento"
+                                    value={values.documento}
+                                    onChange={handleChange}
+                                    isInvalid={touched.documento && errors.documento}
+                                />
+                                <Form.Control.Feedback type="invalid">
+                                    {errors.documento}
+                                </Form.Control.Feedback>
+                            </Form.Group>
 
-            <Form.Group className="mb-3" controlId="telefone">
-              <Form.Label>Telefone</Form.Label>
-              <Form.Control
-                type="text"
-                name="telefone"
-                value={values.telefone}
-                onChange={handleChange}
-              />
-            </Form.Group>
+                            <Form.Group className="mb-3" controlId="email">
+                                <Form.Label>E-mail</Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    name="email"
+                                    value={values.email}
+                                    onChange={handleChange}
+                                    isInvalid={touched.email && errors.email}
+                                />
+                                <Form.Control.Feedback type="invalid">
+                                    {errors.email}
+                                </Form.Control.Feedback>
+                            </Form.Group>
 
-            <div className="text-center">
-              <Button type="submit" variant="success">
-                <FaTractor /> Salvar
-              </Button>
-              <Link href="/" className="btn btn-danger ms-2">
-                <TiArrowBack /> Voltar
-              </Link>
-            </div>
-          </Form>
-        )}
-      </Formik>
-    </Pagina>
-  );
+                            <Form.Group className="mb-3" controlId="telefone">
+                                <Form.Label>Telefone</Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    name="telefone"
+                                    value={values.telefone}
+                                    onChange={(value) => {
+                                        setFieldValue('telefone', mask(value.target.value, '(99) 99999-9999'));
+                                    }}
+                                    isInvalid={touched.telefone && errors.telefone}
+                                />
+                                <Form.Control.Feedback type="invalid">
+                                    {errors.telefone}
+                                </Form.Control.Feedback>
+                            </Form.Group>
+
+                            <Form.Group className="mb-3" controlId="data_nascimento">
+                                <Form.Label>Dt Nascimento</Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    name="data_nascimento"
+                                    value={values.data_nascimento}
+                                    onChange={(value) => {
+                                        setFieldValue('data_nascimento', mask(value.target.value, '99/99/9999'));
+                                    }}
+                                    isInvalid={touched.data_nascimento && errors.data_nascimento}
+                                />
+                                <Form.Control.Feedback type="invalid">
+                                    {errors.data_nascimento}
+                                </Form.Control.Feedback>
+                            </Form.Group>
+
+                            <div className="text-center">
+                                <Button onClick={handleSubmit} variant="success">
+                                    <FaCheck /> Salvar
+                                </Button>
+                                <Link href="/funcionarios" className="btn btn-danger ms-2">
+                                    <MdOutlineArrowBack /> Voltar
+                                </Link>
+                            </div>
+                        </Form>
+                    );
+                }}
+            </Formik>
+        </Pagina>
+    );
 }
